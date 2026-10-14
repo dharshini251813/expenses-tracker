@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expenses Tracker</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #6b7280;
+      --primary: #5b5ce2;
+      --primary-dark: #4647c8;
+      --green: #15966a;
+      --red: #d94b5b;
+      --border: #e6eaf2;
+      --shadow: 0 10px 28px rgba(29, 41, 71, .07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: linear-gradient(135deg, #f6f7ff 0%, var(--bg) 55%, #eefaf6 100%);
+      min-height: 100vh;
+    }
+    .container { width: min(1100px, 92%); margin: 0 auto; padding: 28px 0 42px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      display: grid; place-items: center; width: 48px; height: 48px; border-radius: 15px;
+      color: white; background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      font-size: 24px; box-shadow: 0 8px 18px #5b5ce244;
+    }
+    h1 { font-size: clamp(1.35rem, 3vw, 2rem); margin: 0; letter-spacing: -.04em; }
+    .subtitle { margin: 5px 0 0; color: var(--muted); font-size: .93rem; }
+    .today { color: var(--muted); font-size: .9rem; text-align: right; }
+    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 22px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 22px; box-shadow: var(--shadow); }
+    .summary .card { position: relative; overflow: hidden; }
+    .summary .card::after { content: ""; position: absolute; width: 90px; height: 90px; border-radius: 50%; right: -30px; top: -30px; background: #5b5ce20d; }
+    .label { color: var(--muted); font-size: .9rem; margin-bottom: 12px; }
+    .amount { font-size: clamp(1.45rem, 3vw, 2rem); font-weight: 750; letter-spacing: -.04em; overflow-wrap: anywhere; }
+    .amount.income { color: var(--green); }
+    .amount.expense { color: var(--red); }
+    .content { display: grid; grid-template-columns: 350px 1fr; gap: 20px; align-items: start; }
+    h2 { margin: 0 0 18px; font-size: 1.1rem; letter-spacing: -.02em; }
+    label { display: block; font-size: .87rem; font-weight: 650; margin: 14px 0 7px; }
+    input, select {
+      width: 100%; padding: 12px 13px; border: 1px solid #dce2ee; border-radius: 11px;
+      background: #fff; color: var(--text); font: inherit; outline: none;
+    }
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px #5b5ce21c; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button { border: 0; border-radius: 11px; padding: 12px 15px; font: inherit; font-weight: 700; cursor: pointer; transition: .15s ease; }
+    button:active { transform: scale(.98); }
+    .primary-btn { background: var(--primary); color: white; width: 100%; margin-top: 18px; }
+    .primary-btn:hover { background: var(--primary-dark); }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .toolbar h2 { margin: 0; }
+    .filter { max-width: 165px; padding: 10px; }
+    .transaction-list { display: grid; gap: 10px; }
+    .transaction {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+      border: 1px solid var(--border); border-radius: 15px; background: #fff;
+    }
+    .category-icon { flex: 0 0 43px; height: 43px; display: grid; place-items: center; border-radius: 13px; background: #f0f1ff; font-size: 21px; }
+    .transaction-info { flex: 1; min-width: 0; }
+    .transaction-title { font-weight: 750; overflow-wrap: anywhere; }
+    .transaction-meta { color: var(--muted); font-size: .82rem; margin-top: 4px; }
+    .transaction-right { text-align: right; }
+    .transaction-amount { font-weight: 800; white-space: nowrap; }
+    .transaction-amount.income { color: var(--green); }
+    .transaction-amount.expense { color: var(--red); }
+    .delete-btn { display: inline-block; margin-top: 6px; background: #fff0f1; color: var(--red); padding: 5px 8px; font-size: .75rem; }
+    .empty { text-align: center; color: var(--muted); padding: 36px 15px; border: 1px dashed #d9deeb; border-radius: 15px; }
+    .empty .emoji { font-size: 35px; margin-bottom: 8px; }
+    .note { margin: 14px 2px 0; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+    .clear-btn { background: #f1f3f9; color: #596174; padding: 9px 11px; font-size: .8rem; }
+    footer { color: var(--muted); font-size: .8rem; text-align: center; margin-top: 24px; }
+    @media (max-width: 800px) {
+      .content { grid-template-columns: 1fr; }
+      .summary { gap: 10px; }
+      .card { padding: 18px; }
+    }
+    @media (max-width: 520px) {
+      .container { width: 94%; padding-top: 20px; }
+      header { align-items: flex-start; }
+      .today { display: none; }
+      .summary { grid-template-columns: 1fr; }
+      .summary .card { padding: 15px 18px; }
+      .label { margin-bottom: 5px; }
+      .amount { font-size: 1.5rem; }
+      .toolbar { align-items: flex-start; flex-wrap: wrap; }
+      .filter { max-width: 100%; }
+      .transaction { gap: 9px; padding: 11px; }
+      .category-icon { flex-basis: 38px; height: 38px; }
+      .transaction-amount { font-size: .9rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">₹</div>
+        <div>
+          <h1>Expenses Tracker</h1>
+          <p class="subtitle">A simple way to manage your money.</p>
+        </div>
+      </div>
+      <div class="today" id="today"></div>
+    </header>
+
+    <section class="summary" aria-label="Money summary">
+      <article class="card">
+        <div class="label">Total Balance</div>
+        <div class="amount" id="balance">₹0.00</div>
+      </article>
+      <article class="card">
+        <div class="label">Total Income</div>
+        <div class="amount income" id="income">₹0.00</div>
+      </article>
+      <article class="card">
+        <div class="label">Total Expenses</div>
+        <div class="amount expense" id="expenses">₹0.00</div>
+      </article>
+    </section>
+
+    <section class="content">
+      <section class="card">
+        <h2>Add a transaction</h2>
+        <form id="transaction-form">
+          <label for="title">Description</label>
+          <input id="title" name="title" type="text" placeholder="e.g. Grocery shopping" maxlength="70" required>
+
+          <div class="form-row">
+            <div>
+              <label for="amount">Amount (₹)</label>
+              <input id="amount" name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+            </div>
+            <div>
+              <label for="type">Type</label>
+              <select id="type" name="type">
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="category">Category</label>
+              <select id="category" name="category">
+                <option>Food</option>
+                <option>Transport</option>
+                <option>Shopping</option>
+                <option>Bills</option>
+                <option>Education</option>
+                <option>Health</option>
+                <option>Salary</option>
+                <option>Entertainment</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="date">Date</label>
+              <input id="date" name="date" type="date" required>
+            </div>
+          </div>
+          <button class="primary-btn" type="submit">+ Add Transaction</button>
+        </form>
+        <p class="note">Your transactions are saved in this browser on this device using local storage.</p>
+      </section>
+
+      <section class="card">
+        <div class="toolbar">
+          <h2>Recent transactions</h2>
+          <select id="filter" class="filter" aria-label="Filter transactions">
+            <option value="all">All transactions</option>
+            <option value="income">Income only</option>
+            <option value="expense">Expenses only</option>
+          </select>
+        </div>
+        <div id="transaction-list" class="transaction-list"></div>
+        <div class="toolbar" style="margin-top:14px;margin-bottom:0">
+          <span class="note" id="count" style="margin:0"></span>
+          <button type="button" class="clear-btn" id="clear-all">Clear all</button>
+        </div>
+      </section>
+    </section>
+    <footer>Expenses Tracker · Keep track, spend mindfully.</footer>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "expensesTrackerTransactions_v1";
+    const form = document.getElementById("transaction-form");
+    const list = document.getElementById("transaction-list");
+    const filter = document.getElementById("filter");
+    const currency = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
+    const categoryIcons = {
+      Food: "🍽️", Transport: "🚌", Shopping: "🛍️", Bills: "🧾",
+      Education: "📚", Health: "💊", Salary: "💼", Entertainment: "🎬", Other: "💰"
+    };
+
+    let transactions = loadTransactions();
+
+    function localDateString(date = new Date()) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    document.getElementById("date").value = localDateString();
+    document.getElementById("today").textContent = new Date().toLocaleDateString("en-IN", {
+      weekday: "short", day: "numeric", month: "short", year: "numeric"
+    });
+
+    function loadTransactions() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveTransactions() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+      } catch (error) {
+        alert("Could not save data in this browser. Please check your browser storage settings.");
+      }
+    }
+
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      }[character]));
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return "";
+      const parts = dateString.split("-");
+      return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+        .toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    }
+
+    function render() {
+      const totalIncome = transactions
+        .filter(item => item.type === "income")
+        .reduce((sum, item) => sum + item.amount, 0);
+      const totalExpenses = transactions
+        .filter(item => item.type === "expense")
+        .reduce((sum, item) => sum + item.amount, 0);
+
+      document.getElementById("income").textContent = currency.format(totalIncome);
+      document.getElementById("expenses").textContent = currency.format(totalExpenses);
+      document.getElementById("balance").textContent = currency.format(totalIncome - totalExpenses);
+
+      const visible = transactions
+        .filter(item => filter.value === "all" || item.type === filter.value)
+        .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+
+      document.getElementById("count").textContent =
+        `${visible.length} transaction${visible.length === 1 ? "" : "s"}`;
+
+      if (visible.length === 0) {
+        list.innerHTML = `<div class="empty"><div class="emoji">🧾</div><strong>No transactions yet</strong><br><span>Add your first income or expense to get started.</span></div>`;
+        return;
+      }
+
+      list.innerHTML = visible.map(item => `
+        <article class="transaction">
+          <div class="category-icon" aria-hidden="true">${categoryIcons[item.category] || "💰"}</div>
+          <div class="transaction-info">
+            <div class="transaction-title">${escapeHTML(item.title)}</div>
+            <div class="transaction-meta">${escapeHTML(item.category)} · ${formatDate(item.date)}</div>
+          </div>
+          <div class="transaction-right">
+            <div class="transaction-amount ${item.type}">
+              ${item.type === "income" ? "+" : "−"}${currency.format(item.amount)}
+            </div>
+            <button class="delete-btn" type="button" data-delete="${escapeHTML(item.id)}" aria-label="Delete ${escapeHTML(item.title)}">Delete</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const title = document.getElementById("title").value.trim();
+      const amount = Number(document.getElementById("amount").value);
+      const type = document.getElementById("type").value;
+      const category = document.getElementById("category").value;
+      const date = document.getElementById("date").value;
+
+      if (!title || !Number.isFinite(amount) || amount <= 0 || !date) {
+        alert("Please enter a description, a valid amount, and a date.");
+        return;
+      }
+
+      transactions.push({
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        title, amount, type, category, date, createdAt: Date.now()
+      });
+      saveTransactions();
+      form.reset();
+      document.getElementById("date").value = localDateString();
+      document.getElementById("type").value = "expense";
+      render();
+    });
+
+    list.addEventListener("click", event => {
+      const button = event.target.closest("[data-delete]");
+      if (!button) return;
+      transactions = transactions.filter(item => item.id !== button.dataset.delete);
+      saveTransactions();
+      render();
+    });
+
+    filter.addEventListener("change", render);
+
+    document.getElementById("clear-all").addEventListener("click", () => {
+      if (transactions.length === 0) {
+        alert("There are no transactions to clear.");
+        return;
+      }
+      if (confirm("Delete all transactions? This cannot be undone.")) {
+        transactions = [];
+        saveTransactions();
+        render();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
